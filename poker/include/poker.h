@@ -1,6 +1,11 @@
 #ifndef _H_POKER_
 #define _H_POKER_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <vector>
+#include <algorithm>
+
 // enum Outcome {INVALID, UNKNOWN, LOSE, WIN};
 
 // class Poker {
@@ -28,6 +33,8 @@
 // 	void PrintStrategy();
 // };
 
+enum PokerCombo {HIGH, PAIR, PAIR2, TRIPLE, STR8, FLUSH, FULL, FOUR, STR8FLUSH};
+
 class Card {
 public:
 	int id;
@@ -39,6 +46,12 @@ public:
 	void Print();
 };
 
-int HandValue(Card cards[5]);
+struct Combination {
+	PokerCombo combo;
+	std::vector<Card*> card;
+	int Value();
+};
+
+Combination HandValue(std::vector<Card> cards);
 
 #endif
