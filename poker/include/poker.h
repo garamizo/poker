@@ -1,39 +1,10 @@
 #ifndef _H_POKER_
 #define _H_POKER_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 #include <vector>
 #include <algorithm>
 
-// enum Outcome {INVALID, UNKNOWN, LOSE, WIN};
-
-// class Poker {
-// private:
-// 	// union {
-// 	// 	int m[3][3];
-// 	// 	int v[9];
-// 	// };
-// 	int turn;  // -1 (over), 1 (player 1), 2 (player 2)
-// 	float pot;
-
-// 	void Undo(int move);
-// 	Outcome TestMove(int move);
-
-// public:
-// 	Velha() { Velha(1); };
-// 	Velha(int start_player);
-// 	bool Play(int move);
-// 	int PlanSilly();
-// 	int PlanSmart();
-// 	int State(); // ongoing (0), tie (-1), p1 wins (1), p2 wins (2)
-// 	void Print();
-// 	int Query();
-// 	int Turn() {return turn;};
-// 	void PrintStrategy();
-// };
-
-enum PokerCombo {HIGH, PAIR, PAIR2, TRIPLE, STR8, FLUSH, FULL, FOUR, STR8FLUSH};
 
 class Card {
 public:
@@ -41,17 +12,21 @@ public:
 
 	Card(int suit, int number) : id(number + suit*13) {};
 	Card() {Card(0, 0);};
-	int Suit() { return(id / 13); };
-	int Number() { return(id % 13); };
-	void Print();
+	int Suit() const { return(id / 13); };
+	int Number() const { return(id % 13); };
+	
+	friend std::ostream& operator<<(std::ostream& os, const Card& c);  
 };
 
-struct Combination {
-	PokerCombo combo;
-	std::vector<Card*> card;
-	int Value();
+enum Combination {HIGH, PAIR, PAIR2, TRIPLE, STR8, FLUSH, FULL, FOURS, STR8FLUSH};
+
+struct Hand {
+	enum Combination combo;
+	std::vector<Card> card;  // sorted
+	friend bool operator> (const Hand& h1, const Hand & h2);
+	friend std::ostream& operator<<(std::ostream& os, Hand& h);
 };
 
-Combination HandValue(std::vector<Card> cards);
+Hand EvalHand(std::vector<Card> cards);
 
 #endif
