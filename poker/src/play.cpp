@@ -6,27 +6,22 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-	// Card cards[] = {
-	// 	Card(0, 5),
-	// 	Card(1, 4),
-	// 	Card(2, 1),
-	// 	Card(1, 3),
-	// 	Card(3, 2) };
-	std::vector<Card> cards({
-		Card(0, 5),
-		Card(3, 10),
-		Card(2, 6),
-		Card(3, 6),
-		Card(3, 7),
-		Card(3, 8),
-		Card(3, 9) });
+	poker::Hand h1({
+		{0, 12},
+		{3, 6},
+		{2, 9},
+		{1, 12}});
 
-	// card.Print();
-	// printf("%d\n", HandValue(cards));
-	// EvalHand(cards);
-	// std::cout << cards[0] << std::endl;
-	Hand hand = EvalHand(cards);
-	cout << hand << endl;
+	poker::Hand h2({
+		{0, 11},
+		{3, 11},
+		{2, 9},
+		{1, 11}});
+
+	vector<poker::Hand> hands = {h1, h2};
+	sort(hands.begin(), hands.end());
+
+	cout << hands[1] << endl;
 
 	return 0;
 }

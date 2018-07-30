@@ -1,106 +1,164 @@
 #include "poker.h"
 
+namespace poker {
 
-std::ostream& operator<<(std::ostream& os, const Card& c)  
+std::ostream& operator<<(std::ostream& os, Card& c)  
 {  
     os << "(" << c.Suit() << ' ' << c.Number() << ")";  
     return os;  
 }
 
-bool operator> (const Hand& h1, const Hand & h2)
+bool Hand::operator<(Hand & h2) const
 {
-	// TODO fill in tie criteria
-    return  h1.combo > h2.combo;
+	if (combo != h2.combo)
+    	return (combo < h2.combo);
+
+    for (int i = 0, size = card.size(); i < size; i++)
+    	if (card[i] < h2.card[i])
+    		return (true);
+
+    return (false);
 }
 
 
-
-Hand EvalHand(std::vector<Card> cards)
+Hand::Hand(const std::vector<Card>& cards)
 {
-	Hand hand;
-
 	// build inverted lists
-	int nsuit[4], nnumber[13], ncard[52];
-	std::fill_n(nsuit, 4, 0);
-	std::fill_n(nnumber, 13, 0);
-	std::fill_n(ncard, 52, 0);
-	for (int i = 0; i < cards.size(); i++) {
-		nsuit[cards[i].Suit()]++;
-		nnumber[cards[i].Number()]++;
-		ncard[cards[i].id]++;
+	std::vector<std::vector<Card>> suit_inv(4),
+								   number_inv(13);
+	std::vector<Card*> id_inv(52, 0);
+	for (int i = 0, size = cards.size(); i < size; i++) {
+		number_inv[cards[i].Number()].push_back(cards[i]);
+		suit_inv[cards[i].Suit()].push_back(cards[i]);
+		id_inv[cards[i].id] = (Card*) &cards[i];
 	}
-
-	int seq_top = -1;
-	int flush_suit;
 
 	// straight flush
-	for (int i = 0; i < 4; i++) {  // for each suit
-		for (int j = 12; j >= 4; j--) {  // for each number
+	for (int j = 12; j >= 4; j--)  // for each number
+		for (int i = 0; i < 4; i++) {  // for each suit
 			int card_id = j + i*13;
-			if (ncard[card_id] && ncard[card_id-1] && ncard[card_id-2] &&
-				ncard[card_id-3] && ncard[card_id-4] && j > seq_top)
+			if (id_inv[card_id] && id_inv[card_id-1] && id_inv[card_id-2] &&
+				id_inv[card_id-3] && id_inv[card_id-4])
 			{
-				seq_top = j;
-				flush_suit = i;
-				break;
+				combo = STR8FLUSH;
+				card = {*id_inv[card_id], *id_inv[card_id-1], *id_inv[card_id-2],
+							 *id_inv[card_id-3], *id_inv[card_id-4]};
+				return;
 			}
+	}
+
+	// fours
+	for (int i = 12; i >= 0; i--)
+		if (number_inv[i].size() == 4) {
+			combo = FOURS;
+			std::copy(number_inv[i].begin(), number_inv[i].begin() + 4, card.begin());
+
+			// complete hand with highest card
+			for (int j = 12; j >= 0; j--)
+				if (number_inv[j].size() > 0 && j != i) {
+					card[4] = number_inv[j][0];
+					return;
+				}
 		}
-		int cid = 3 + i*13;
-		if (ncard[cid] && ncard[cid-1] && ncard[cid-2] &&
-			ncard[cid-3] && ncard[cid+12] && 3 > seq_top)
+
+	// full-house
+	for (int i = 12; i >= 0; i--)
+		if (number_inv[i].size() == 3) {
+			// complete hand with highest pair
+			for (int j = 12; j >= 0; j--)
+				if (number_inv[j].size() >= 2 && j != i) {
+					combo = FULL;
+					card.resize(5);
+					std::copy(number_inv[i].begin(), number_inv[i].begin() + 3, card.begin());
+					std::copy(number_inv[j].begin(), number_inv[j].begin() + 2, card.begin() + 3);
+					return;
+				}
+		}
+
+	// flush
+	for (int i = 0; i < 4; i++)
+		if (suit_inv[i].size() >= 5) {
+			combo = FLUSH;
+			// store sorted
+			std::sort(suit_inv[i].begin(), suit_inv[i].end());
+			card.resize(5);
+			std::reverse_copy(suit_inv[i].end()-5, suit_inv[i].end(), card.begin());
+			return;
+		}
+
+	// straight
+	for (int j = 12; j >= 4; j--) {  // for each number
+		if (number_inv[j].size() && number_inv[j-1].size() && number_inv[j-2].size() &&
+			number_inv[j-3].size() && number_inv[j-4].size())
 		{
-			seq_top = 3;
-			flush_suit = i;
-		}
-	}
-	if (seq_top >= 0) {
-		hand.combo = STR8FLUSH;
-		for (int i = 0; i < 4; i++)
-			hand.card.push_back(Card(flush_suit, seq_top-i));
-		if (seq_top-4 == -1)
-			hand.card.push_back(Card(flush_suit, 12));
-		else
-			hand.card.push_back(Card(flush_suit, seq_top-4));
-
-		return (hand);
-	}
-
-	// // fours
-	// for (int i = 12; i >= 4; i--)
-	// 	if (nnumber[i] >= 4) {
-	// 		hand.combo = FOURS;
-	// 		for (int j = 0; j < 4; j++)
-	// 			hand.card.push_back(Card(j, i));
-			
-	// 	}
-
-	printf("%d %d\n", seq_top, flush_suit);
-
-	bool same_suit = nsuit[0] >= 5 ||
-					 nsuit[1] >= 5 ||
-					 nsuit[2] >= 5 ||
-					 nsuit[3] >= 5;
-
-	int seq_unsuited = -1;
-	for (int i = 12; i >= 4; i--) {
-		if (nnumber[i] && nnumber[i-1] && nnumber[i-2] &&
-			nnumber[i-3] && nnumber[i-4]) {
-			seq_unsuited = i;
-			break;
+			combo = STR8;
+			card = {number_inv[j][0], number_inv[j-1][0], number_inv[j-2][0],
+						 number_inv[j-3][0], number_inv[j-4][0]};
+			return;
 		}
 	}
 
-	
+	// 3s
+	for (int i = 12; i >= 0; i--)
+		if (number_inv[i].size() == 3) {
+			combo = TRIPLE;
+			card.resize(3);
+			std::copy(number_inv[i].begin(), number_inv[i].begin() + 3, card.begin());
 
-	
-	return hand;
+			// complete hand with highest cards
+			for (int j = 12; j >= 0 && card.size() < 5; j--)
+				if (number_inv[j].size() > 0 && j != i)
+					card.push_back(number_inv[j][0]);
+			return;
+		}
+
+	// 2 pairs
+	for (int i = 12; i >= 0; i--)
+		if (number_inv[i].size() == 2) {
+			// complete hand with highest pair
+			for (int j = i-1; j >= 0; j--)
+				if (number_inv[j].size() == 2) {
+					combo = PAIR2;
+					card.resize(4);
+					std::copy(number_inv[i].begin(), number_inv[i].begin() + 2, card.begin());
+					std::copy(number_inv[j].begin(), number_inv[j].begin() + 2, card.begin() + 2);
+					// complete hand with highest card
+					for (int k = 12; k >= 0 && card.size() < 5; k--)
+						if (number_inv[k].size() > 0 && k != i && k != j)
+							card.push_back(number_inv[k][0]);
+					return;
+				}
+		}
+
+	// pair
+	for (int i = 12; i >= 0; i--)
+		if (number_inv[i].size() == 2) {
+			combo = PAIR;
+			card = {number_inv[i][0], number_inv[i][1]};
+
+			// complete hand with highest cards
+			for (int j = 12; j >= 0 && card.size() < 5; j--)
+				if (number_inv[j].size() > 0 && j != i)
+					card.push_back(number_inv[j][0]);
+			return;
+		}
+
+	// high
+	combo = HIGH;
+	for (int j = 12; j >= 0 && card.size() < 5; j--)
+		if (number_inv[j].size() > 0)
+			card.push_back(number_inv[j][0]);
 }
 
 std::ostream& operator<<(std::ostream& os, Hand& h)  
 {
-	os << "Combo: " << h.combo << "\nCards: ";
-	for (int i = 0; i < 5; i++)
+	os << "Combo: " << combination_str[h.combo] << "\nCards: ";
+	for (int i = 0; i < h.card.size(); i++)
     	os << h.card[i] << ", ";  
     return os;  
 }
+
+}
+
+
 
