@@ -51,14 +51,14 @@ Hand::Hand(const std::vector<Card>& cards)
 	for (int i = 12; i >= 0; i--)
 		if (number_inv[i].size() == 4) {
 			combo = FOURS;
+			card.resize(4);
 			std::copy(number_inv[i].begin(), number_inv[i].begin() + 4, card.begin());
 
 			// complete hand with highest card
-			for (int j = 12; j >= 0; j--)
-				if (number_inv[j].size() > 0 && j != i) {
-					card[4] = number_inv[j][0];
-					return;
-				}
+			for (int j = 12; j >= 0 && card.size() < 5; j--)
+				if (number_inv[j].size() > 0 && j != i)
+					card.push_back(number_inv[j][0]);
+			return;
 		}
 
 	// full-house
