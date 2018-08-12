@@ -160,60 +160,47 @@ std::ostream& operator<<(std::ostream& os, Hand& h)
 
 
 float WinChances(Hand& p, Hand& t, std::vector<Card*> card_inv) {
-    // For Texas Holdem
+    // For Texas Holdem, 1v1
     //  p: player hand (2 cards)
-    //  t: incomplete table hand (up to 5 cards)
-    //  num_players: players on game
+    //  t: table hand (5 cards)
 
-    // table hand is still incomplete
-    if (t.card.size() < 5) {
-        float prob = 0;
-        int count = 0;
-        for (int i = 0, size = card_inv.size(); i < size; i++)
-            if (card_inv[i]) {
-                Card* draw = card_inv[i];
-                t.card.push_back(*draw);
-                card_inv[i] = 0;
-                Hand t1(t.card);
+    // // table hand is still incomplete
+    // if (t.card.size() < 5) {
+    //     float prob = 0;
+    //     int count = 0;
+    //     for (int i = 0, size = card_inv.size(); i < size; i++)
+    //         if (card_inv[i]) {
+    //             Card* draw = card_inv[i];
+    //             t.card.push_back(*draw);
+    //             card_inv[i] = 0;
+    //             Hand t1(t.card);
 
-                prob += WinChances(p, t1, card_inv);
-                count++;
+    //             prob += WinChances(p, t1, card_inv);
+    //             count++;
 
-                card_inv[i] = draw;
-                t.card.pop_back();
-            }
-        return (prob / count);
-    }
+    //             card_inv[i] = draw;
+    //             t.card.pop_back();
+    //         }
+    //     return (prob / count);
+    // }
 
-    // guess oponents hands
+    Hand p1({t.card[0], t.card[1], t.card[2], t.card[3], t.card[4], p.card[0], p.card[1]});
+
+    // try oponents hands
     int nloss = 0,
         count = 0;
-    for (int i = 0, size = card_inv.size(); i < size; i++) {
-        if (!card_inv[i]) continue;
+    for (int i = 0, size = card_inv.size(); i < size; i++)
+        for (int j = i + 1; j < size; j++)
+        {
+            if (card_inv[i] || card_inv[j])
+                continue;
+            
+            Hand p2({t.card[0], t.card[1], t.card[2], t.card[3], t.card[4], Card(i), Card(j)});
 
-        Card* drawi = card_inv[i];
-        t.card.push_back(*drawi);
-        card_inv[i] = 0;
-
-        for (int j = 0; j < size; j++) {
-            if (!card_inv[j]) continue;
-
-            Card* drawj = card_inv[j];
-            t.card.push_back(*drawi);
-            card_inv[j] = 0;
-
-            Hand p1({t.card[0], t.card[1], t.card[2], t.card[3], t.card[4], p.card[0], p.card[1]});
-            Hand p2({t.card[0], t.card[1], t.card[2], t.card[3], t.card[4], *drawi, *drawj});
-            if (p1 < p2) nloss++;
+            if (p1 < p2)
+                nloss++;
             count++;
-
-            card_inv[j] = drawj;
-            t.card.pop_back();
         }
-
-        card_inv[i] = drawi;
-        t.card.pop_back();
-    }
 
     float prob = float(count - nloss) / count;
     return (prob);

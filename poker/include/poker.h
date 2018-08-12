@@ -12,6 +12,7 @@ public:
     int id;
 
     Card(int suit, int number) : id(number + suit*13) {};
+    Card(int id_) : id(id_) {};
     Card() {Card(0, 0);};
     int Suit() const { return(id / 13); };
     int Number() const { return(id % 13); };
