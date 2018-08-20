@@ -40,7 +40,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, Hand& h);
 };
 
-float WinChances(Hand& p, Hand& t, std::vector<Card*> card_inv);
+float WinChances(Hand& p1, Hand& t, std::vector<int>& card_inv, int& nloss, int& count, int nplayers, int jl = -1);
 
 }
 

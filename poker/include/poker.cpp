@@ -159,9 +159,9 @@ std::ostream& operator<<(std::ostream& os, Hand& h)
 }
 
 
-float WinChances(Hand& p, Hand& t, std::vector<Card*> card_inv) {
+float WinChances(Hand& p1, Hand& t, std::vector<int>& card_inv, int& nloss, int& count, int nplayers, int jl) {
     // For Texas Holdem, 1v1
-    //  p: player hand (2 cards)
+    //  p: player hand (2 + 5 cards)
     //  t: table hand (5 cards)
 
     // // table hand is still incomplete
@@ -184,22 +184,24 @@ float WinChances(Hand& p, Hand& t, std::vector<Card*> card_inv) {
     //     return (prob / count);
     // }
 
-    Hand p1({t.card[0], t.card[1], t.card[2], t.card[3], t.card[4], p.card[0], p.card[1]});
-
     // try oponents hands
-    int nloss = 0,
-        count = 0;
-    for (int i = 0, size = card_inv.size(); i < size; i++)
+    for (int i = jl + 1, size = card_inv.size(); i < size; i++)
         for (int j = i + 1; j < size; j++)
         {
             if (card_inv[i] || card_inv[j])
                 continue;
-            
-            Hand p2({t.card[0], t.card[1], t.card[2], t.card[3], t.card[4], Card(i), Card(j)});
+            card_inv[i] = card_inv[j] = 1;
+
+            Hand p2({t.card[0], t.card[1], t.card[2], t.card[3], t.card[4], i, j});
 
             if (p1 < p2)
                 nloss++;
             count++;
+
+            if (nplayers > 1)
+                WinChances(p1, t, card_inv, nloss, count, nplayers-1, j);
+
+            card_inv[i] = card_inv[j] = 0;
         }
 
     float prob = float(count - nloss) / count;

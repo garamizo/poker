@@ -38,20 +38,19 @@ void TestChances() {
                        {2, 1},
                        {1, 11},
                        {2, 5}});
-    poker::Hand p1({{0, 12},
+    poker::Hand p1({table.card[0], table.card[1], table.card[2], table.card[3], table.card[4],
+                    {0, 12},
                     {2, 12}});
 
-    std::vector<poker::Card*> id_inv(52, 0);
-    for (int i = 0, size = table.card.size(); i < size; i++)
-        id_inv[table.card[i].id] = (poker::Card*) &table.card[i];
-    id_inv[p1.card[0].id] = (poker::Card*) &p1.card[0];
-    id_inv[p1.card[1].id] = (poker::Card*) &p1.card[1];
+    vector<int> id_inv(52, 0);
+    for (int i = 0, size = p1.card.size(); i < size; i++)
+        id_inv[table.card[i].id] = 1;
 
-    float prob = 100 * WinChances(p1, table, id_inv);  // prob of p1 win
-    poker::Hand h1({table.card[0], table.card[1], table.card[2], table.card[3], table.card[4], p1.card[0], p1.card[1]});
+    int nloss = 0, count = 0;
+    float prob = 100 * WinChances(p1, table, id_inv, nloss, count, 3);  // prob of p1 win
 
     cout << "P1 win chances: " << prob << endl;
-    cout << h1 << endl;
+    cout << p1 << endl;
 }
 
 int main(int argc, char* argv[]) {
